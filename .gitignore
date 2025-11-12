@@ -1,0 +1,14 @@
+# Ignore accidentally pushed personal/project folders (photo folders / local projects)
+Projectfolder/
+code-2/
+hello/
+my-file/
+my_project23/
+program--2/
+student_programming/
+
+# Optional: ignore common image types (uncomment to enable)
+# *.png
+# *.jpg
+# *.jpeg
+# *.gifnode_modules
