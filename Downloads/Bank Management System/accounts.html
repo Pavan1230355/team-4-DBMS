@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management - SecureBank</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="config.js"></script>
+    <script src="ai-service.js"></script>
+    <style>
+        /* Account Management Specific Styles */
+        .accounts-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .accounts-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+
+        .accounts-header p {
+            margin: 0;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .back-to-home {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .back-to-home .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-home .btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-card i {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .stat-card h3 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .stat-card p {
+            color: #666;
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .account-management-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Check if user is logged in before loading the page
+        const currentUser = localStorage.getItem('current_user');
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    
+    <!-- Back to Home Button -->
+    <div class="back-to-home">
+        <a href="index.html" class="btn">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+        <a href="transactions.html" class="btn" style="margin-left: 10px;">
+            <i class="fas fa-exchange-alt"></i> Transactions
+        </a>
+        <a href="profile.html" class="btn" style="margin-left: 10px;">
+            <i class="fas fa-user-cog"></i> My Profile
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="accounts-header">
+        <div class="container">
+            <h1><i class="fas fa-users"></i> Account Management</h1>
+            <p>Create, view, update, and manage customer accounts efficiently</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="account-management-container">
+        
+        <!-- Account Statistics Overview -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <h3 id="total-accounts-stat">0</h3>
+                <p>Total Accounts</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-wallet"></i>
+                <h3 id="total-balance-stat">₹0</h3>
+                <p>Total Bank Balance</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-user-plus"></i>
+                <h3 id="new-accounts-today">0</h3>
+                <p>New Accounts Today</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3 id="low-balance-accounts">0</h3>
+                <p>Low Balance Accounts</p>
+            </div>
+        </div>
+
+        <!-- Account Management Tabs -->
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab-button active" onclick="showAccountTab('create')">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+                <button class="tab-button" onclick="showAccountTab('view')">
+                    <i class="fas fa-search"></i> View Account
+                </button>
+                <button class="tab-button" onclick="showAccountTab('update')">
+                    <i class="fas fa-edit"></i> Update Account
+                </button>
+                <button class="tab-button" onclick="showAccountTab('delete')">
+                    <i class="fas fa-trash-alt"></i> Delete Account
+                </button>
+                <button class="tab-button" onclick="showAccountTab('list')">
+                    <i class="fas fa-list"></i> All Accounts
+                </button>
+            </div>
+
+            <!-- Create Account Tab -->
+            <div id="create-account-tab" class="tab-content active">
+                <div class="form-header">
+                    <h3><i class="fas fa-user-plus"></i> Create New Account</h3>
+                    <p>Fill in all required details to create a new customer account</p>
+                </div>
+                
+                <form onsubmit="createAccount(event)" class="account-form">
+                    <div class="form-section">
+                        <h4><i class="fas fa-user"></i> Personal Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Customer Name *</label>
+                                <input type="text" id="create-name" placeholder="Enter full name" required>
+                                <small class="form-help">Enter customer's full name</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Age *</label>
+                                <input type="number" id="create-age" min="18" max="100" placeholder="Age" required>
+                                <small class="form-help">Must be 18 years or older</small>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Gender *</label>
+                                <select id="create-gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" id="create-phone" placeholder="+91-XXXXXXXXXX">
+                                <small class="form-help">Optional - for contact purposes</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h4><i class="fas fa-university"></i> Account Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Account Type *</label>
+                                <select id="create-type" required>
+                                    <option value="">Select Account Type</option>
+                                    <option value="Savings">Savings Account</option>
+                                    <option value="Current">Current Account</option>
+                                </select>
+                                <small class="form-help">Choose the type of account</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Initial Deposit (₹) *</label>
+                                <input type="number" id="create-deposit" min="1000" step="0.01" placeholder="Minimum ₹1000" required>
+                                <small class="form-help">Minimum deposit: ₹1,000</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-number-preview">
+                        <div class="preview-box">
+                            <i class="fas fa-id-card"></i>
+                            <span>Account Number will be auto-generated: <strong id="next-account-number">10001</strong></span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <i class="fas fa-plus"></i> Create Account
+                    </button>
+                </form>
+            </div>
+
+            <!-- View Account Tab -->
+            <div id="view-account-tab" class="tab-content">
+                <div class="form-header">
+                    <h3><i class="fas fa-search"></i> View Account Details</h3>
+                    <p>Search and view detailed information about any account</p>
+                </div>
+                
+                <div class="search-section">
+                    <div class="search-box enhanced">
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="view-account-number" placeholder="Enter Account Number (e.g., 10001)">
+                            <button onclick="viewAccount()" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> View Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="account-details" class="account-details"></div>
+                
+                <!-- Quick Actions -->
+                <div id="account-actions" class="account-actions" style="display: none;">
+                    <h4>Quick Actions</h4>
+                    <div class="action-buttons">
+                        <button onclick="editCurrentAccount()" class="btn btn-secondary">
+                            <i class="fas fa-edit"></i> Edit Account
+                        </button>
+                        <button onclick="viewTransactionHistory()" class="btn btn-info">
+                            <i class="fas fa-history"></i> Transaction History
+                        </button>
+                        <button onclick="printAccountDetails()" class="btn btn-success">
+                            <i class="fas fa-print"></i> Print Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Account Tab -->
+            <div id="update-account-tab" class="tab-content">
+                <div class="form-header">
+                    <h3><i class="fas fa-edit"></i> Update Account Information</h3>
+                    <p>Search for an account and update customer details</p>
+                </div>
+                
+                <div class="search-section">
+                    <div class="search-box enhanced">
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="update-search-number" placeholder="Enter Account Number to Update">
+                            <button onclick="loadAccountForUpdate()" class="btn btn-info">
+                                <i class="fas fa-download"></i> Load Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <form onsubmit="updateAccount(event)" id="update-form" class="account-form" style="display:none;">
+                    <div class="form-section">
+                        <h4><i class="fas fa-user-edit"></i> Update Personal Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Customer Name *</label>
+                                <input type="text" id="update-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Age *</label>
+                                <input type="number" id="update-age" min="18" max="100" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Gender *</label>
+                                <select id="update-gender" required>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" id="update-phone">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="update-account-number">
+                    <div class="form-actions">
+                        <button type="button" onclick="cancelUpdate()" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Delete Account Tab -->
+            <div id="delete-account-tab" class="tab-content">
+                <div class="form-header">
+                    <h3><i class="fas fa-trash-alt"></i> Delete Account</h3>
+                    <p>Permanently remove an account and all associated data</p>
+                </div>
+                
+                <div class="warning-box danger">
+                    <div class="warning-content">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="warning-text">
+                            <h4>⚠️ DANGER ZONE</h4>
+                            <p>This action cannot be undone. Deleting an account will:</p>
+                            <ul>
+                                <li>Permanently remove all account information</li>
+                                <li>Delete all transaction history</li>
+                                <li>Close the account immediately</li>
+                            </ul>
+                            <p><strong>Please ensure all transactions are complete and balances are cleared before deletion.</strong></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="delete-section">
+                    <div class="search-box enhanced">
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="delete-account-number" placeholder="Enter Account Number to Delete">
+                            <button onclick="previewAccountForDelete()" class="btn btn-warning">
+                                <i class="fas fa-eye"></i> Preview Account
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="delete-preview" class="delete-preview" style="display: none;">
+                        <div id="delete-account-info"></div>
+                        <div class="delete-actions">
+                            <button onclick="confirmDeleteAccount()" class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i> Confirm Delete Account
+                            </button>
+                            <button onclick="cancelDelete()" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Accounts List Tab -->
+            <div id="list-account-tab" class="tab-content">
+                <div class="form-header">
+                    <h3><i class="fas fa-list"></i> All Accounts</h3>
+                    <p>View and manage all customer accounts</p>
+                </div>
+                
+                <div class="list-controls">
+                    <div class="search-filters">
+                        <input type="text" id="account-search" placeholder="Search by name or account number" onkeyup="filterAccounts()">
+                        <select id="account-type-filter" onchange="filterAccounts()">
+                            <option value="">All Account Types</option>
+                            <option value="Savings">Savings</option>
+                            <option value="Current">Current</option>
+                        </select>
+                        <select id="balance-filter" onchange="filterAccounts()">
+                            <option value="">All Balances</option>
+                            <option value="high">High Balance (₹10,000+)</option>
+                            <option value="normal">Normal Balance (₹1,000 - ₹10,000)</option>
+                            <option value="low">Low Balance (< ₹1,000)</option>
+                        </select>
+                        <button onclick="refreshAccountList()" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="accounts-list" class="accounts-list">
+                    <!-- Accounts will be dynamically loaded here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Message Container -->
+    <div id="message-container" class="message-container"></div>
+
+    <script src="script.js"></script>
+    <script>
+        // Initialize account management page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAccountStats();
+            updateAccountNumberPreview();
+            refreshAccountList();
+        });
+
+        // Update account statistics
+        function updateAccountStats() {
+            const totalAccounts = accounts.length;
+            const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+            
+            // Get today's new accounts
+            const today = new Date().toDateString();
+            const newAccountsToday = accounts.filter(acc => 
+                acc.createdDate && new Date(acc.createdDate).toDateString() === today
+            ).length;
+            
+            // Get low balance accounts (less than ₹1,000)
+            const lowBalanceAccounts = accounts.filter(acc => acc.balance < 1000).length;
+            
+            document.getElementById('total-accounts-stat').textContent = totalAccounts;
+            document.getElementById('total-balance-stat').textContent = `₹${totalBalance.toLocaleString('en-IN')}`;
+            document.getElementById('new-accounts-today').textContent = newAccountsToday;
+            document.getElementById('low-balance-accounts').textContent = lowBalanceAccounts;
+        }
+
+        // Refresh accounts list
+        function refreshAccountList() {
+            const accountsList = document.getElementById('accounts-list');
+            if (accounts.length === 0) {
+                accountsList.innerHTML = `
+                    <div class="no-accounts">
+                        <i class="fas fa-users-slash"></i>
+                        <h3>No Accounts Found</h3>
+                        <p>Create your first account to get started</p>
+                        <button onclick="showAccountTab('create')" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Account
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let accountsHTML = '';
+            accounts.forEach(account => {
+                const balanceClass = account.balance >= 10000 ? 'high-balance' : 
+                                   account.balance >= 1000 ? 'normal-balance' : 'low-balance';
+                
+                accountsHTML += `
+                    <div class="account-card" data-account="${account.accountNumber}" data-type="${account.accountType.toLowerCase()}" data-balance="${balanceClass}">
+                        <div class="account-header">
+                            <h4><i class="fas fa-user-circle"></i> ${account.name}</h4>
+                            <span class="account-number">A/C: ${account.accountNumber}</span>
+                        </div>
+                        <div class="account-info-grid">
+                            <div class="info-item">
+                                <span>Account Type</span>
+                                <strong>${account.accountType}</strong>
+                            </div>
+                            <div class="info-item">
+                                <span>Balance</span>
+                                <strong class="balance ${balanceClass}">₹${account.balance.toLocaleString('en-IN')}</strong>
+                            </div>
+                            <div class="info-item">
+                                <span>Age</span>
+                                <strong>${account.age} years</strong>
+                            </div>
+                            <div class="info-item">
+                                <span>Phone</span>
+                                <strong>${account.phone}</strong>
+                            </div>
+                        </div>
+                        <div class="account-actions-row">
+                            <button onclick="viewSpecificAccount('${account.accountNumber}')" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button onclick="editSpecificAccount('${account.accountNumber}')" class="btn btn-sm btn-info">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button onclick="deleteSpecificAccount('${account.accountNumber}')" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            accountsList.innerHTML = accountsHTML;
+        }
+
+        // Filter accounts
+        function filterAccounts() {
+            const searchTerm = document.getElementById('account-search').value.toLowerCase();
+            const typeFilter = document.getElementById('account-type-filter').value;
+            const balanceFilter = document.getElementById('balance-filter').value;
+            
+            const accountCards = document.querySelectorAll('.account-card');
+            
+            accountCards.forEach(card => {
+                const accountNumber = card.getAttribute('data-account');
+                const accountType = card.getAttribute('data-type');
+                const balanceClass = card.getAttribute('data-balance');
+                const accountName = card.querySelector('h4').textContent.toLowerCase();
+                
+                let showCard = true;
+                
+                // Search filter
+                if (searchTerm && !accountName.includes(searchTerm) && !accountNumber.includes(searchTerm)) {
+                    showCard = false;
+                }
+                
+                // Type filter
+                if (typeFilter && accountType !== typeFilter.toLowerCase()) {
+                    showCard = false;
+                }
+                
+                // Balance filter
+                if (balanceFilter && balanceClass !== balanceFilter + '-balance') {
+                    showCard = false;
+                }
+                
+                card.style.display = showCard ? 'block' : 'none';
+            });
+        }
+
+        // Quick action functions
+        function viewSpecificAccount(accountNumber) {
+            showAccountTab('view');
+            document.getElementById('view-account-number').value = accountNumber;
+            viewAccount();
+        }
+
+        function editSpecificAccount(accountNumber) {
+            showAccountTab('update');
+            document.getElementById('update-search-number').value = accountNumber;
+            loadAccountForUpdate();
+        }
+
+        function deleteSpecificAccount(accountNumber) {
+            showAccountTab('delete');
+            document.getElementById('delete-account-number').value = accountNumber;
+            previewAccountForDelete();
+        }
+
+        // Override create account function to update stats
+        const originalCreateAccount = createAccount;
+        createAccount = function(event) {
+            originalCreateAccount(event);
+            updateAccountStats();
+            refreshAccountList();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Management - Bank Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <script>
+        // Check if user is logged in before loading the page
+        const currentUser = localStorage.getItem('current_user');
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-university"></i>
+                <span>Bank Management System</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="accounts.html"><i class="fas fa-users"></i> Account Management</a></li>
+                <li><a href="transactions.html" class="active"><i class="fas fa-exchange-alt"></i> Transactions</a></li>
+                <li><a href="profile.html"><i class="fas fa-user-cog"></i> My Profile</a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <!-- Header Section -->
+            <div class="page-header">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1><i class="fas fa-exchange-alt"></i> Transaction Management</h1>
+                        <p>Manage deposits, withdrawals, and balance inquiries for all accounts</p>
+                    </div>
+                    <div class="header-actions">
+                        <button onclick="refreshTransactionStats()" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh Stats
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Dashboard -->
+            <div class="stats-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-transactions">0</div>
+                            <div class="stat-label">Total Transactions</div>
+                        </div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-deposits">₹0</div>
+                            <div class="stat-label">Total Deposits Today</div>
+                        </div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-withdrawals">₹0</div>
+                            <div class="stat-label">Total Withdrawals Today</div>
+                        </div>
+                    </div>
+                    <div class="stat-card info">
+                        <div class="stat-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-bank-balance">₹0</div>
+                            <div class="stat-label">Total Bank Balance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Tabs -->
+            <div class="tab-container">
+                <div class="tabs">
+                    <button class="tab-button active" onclick="showTransactionTab('deposit')">
+                        <i class="fas fa-plus-circle"></i> Deposit Money
+                    </button>
+                    <button class="tab-button" onclick="showTransactionTab('withdraw')">
+                        <i class="fas fa-minus-circle"></i> Withdraw Money
+                    </button>
+                    <button class="tab-button" onclick="showTransactionTab('balance')">
+                        <i class="fas fa-balance-scale"></i> Check Balance
+                    </button>
+                    <button class="tab-button" onclick="showTransactionTab('history')">
+                        <i class="fas fa-history"></i> Transaction History
+                    </button>
+                </div>
+
+                <!-- Deposit Money Tab -->
+                <div id="deposit-tab" class="tab-content active">
+                    <div class="form-header">
+                        <h3><i class="fas fa-plus-circle"></i> Deposit Money</h3>
+                        <p>Add money to a customer's account</p>
+                    </div>
+                    
+                    <form onsubmit="depositMoney(event)" class="transaction-form">
+                        <div class="form-section">
+                            <h4><i class="fas fa-search"></i> Account Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Account Number *</label>
+                                    <div class="input-with-action">
+                                        <input type="text" id="deposit-account" placeholder="Enter Account Number" required>
+                                        <button type="button" onclick="verifyAccountForDeposit()" class="btn btn-info btn-sm">
+                                            <i class="fas fa-search"></i> Verify
+                                        </button>
+                                    </div>
+                                    <small class="form-help">Enter the account number to deposit money</small>
+                                </div>
+                            </div>
+                            <div id="deposit-account-info" class="account-verification" style="display: none;"></div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4><i class="fas fa-money-bill-wave"></i> Deposit Details</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Deposit Amount (₹) *</label>
+                                    <input type="number" id="deposit-amount" min="1" step="0.01" placeholder="Enter amount to deposit" required>
+                                    <small class="form-help">Minimum deposit: ₹1</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Transaction Type</label>
+                                    <select id="deposit-type" required>
+                                        <option value="">Select Deposit Type</option>
+                                        <option value="Cash">Cash Deposit</option>
+                                        <option value="Cheque">Cheque Deposit</option>
+                                        <option value="Online">Online Transfer</option>
+                                        <option value="NEFT">NEFT Transfer</option>
+                                        <option value="RTGS">RTGS Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label>Transaction Note</label>
+                                    <textarea id="deposit-note" placeholder="Add a note for this deposit (optional)" rows="3"></textarea>
+                                    <small class="form-help">Optional description for the transaction</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" onclick="resetDepositForm()" class="btn btn-secondary">
+                                <i class="fas fa-undo"></i> Reset Form
+                            </button>
+                            <button type="submit" class="btn btn-success btn-large">
+                                <i class="fas fa-plus-circle"></i> Process Deposit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Withdraw Money Tab -->
+                <div id="withdraw-tab" class="tab-content">
+                    <div class="form-header">
+                        <h3><i class="fas fa-minus-circle"></i> Withdraw Money</h3>
+                        <p>Withdraw money from a customer's account with balance verification</p>
+                    </div>
+                    
+                    <form onsubmit="withdrawMoney(event)" class="transaction-form">
+                        <div class="form-section">
+                            <h4><i class="fas fa-search"></i> Account Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Account Number *</label>
+                                    <div class="input-with-action">
+                                        <input type="text" id="withdraw-account" placeholder="Enter Account Number" required>
+                                        <button type="button" onclick="verifyAccountForWithdraw()" class="btn btn-info btn-sm">
+                                            <i class="fas fa-search"></i> Verify
+                                        </button>
+                                    </div>
+                                    <small class="form-help">Enter the account number to withdraw money</small>
+                                </div>
+                            </div>
+                            <div id="withdraw-account-info" class="account-verification" style="display: none;"></div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4><i class="fas fa-money-bill-wave"></i> Withdrawal Details</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Withdrawal Amount (₹) *</label>
+                                    <input type="number" id="withdraw-amount" min="1" step="0.01" placeholder="Enter amount to withdraw" required oninput="checkWithdrawBalance()">
+                                    <small class="form-help">Amount must not exceed available balance</small>
+                                    <div id="withdraw-balance-check" class="balance-indicator" style="display: none;"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Transaction Type</label>
+                                    <select id="withdraw-type" required>
+                                        <option value="">Select Withdrawal Type</option>
+                                        <option value="Cash">Cash Withdrawal</option>
+                                        <option value="ATM">ATM Withdrawal</option>
+                                        <option value="Cheque">Cheque</option>
+                                        <option value="Online">Online Transfer</option>
+                                        <option value="NEFT">NEFT Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label>Transaction Note</label>
+                                    <textarea id="withdraw-note" placeholder="Add a note for this withdrawal (optional)" rows="3"></textarea>
+                                    <small class="form-help">Optional description for the transaction</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" onclick="resetWithdrawForm()" class="btn btn-secondary">
+                                <i class="fas fa-undo"></i> Reset Form
+                            </button>
+                            <button type="submit" class="btn btn-danger btn-large" id="withdraw-submit-btn" disabled>
+                                <i class="fas fa-minus-circle"></i> Process Withdrawal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Check Balance Tab -->
+                <div id="balance-tab" class="tab-content">
+                    <div class="form-header">
+                        <h3><i class="fas fa-balance-scale"></i> Check Account Balance</h3>
+                        <p>View current account balance and recent transaction summary</p>
+                    </div>
+                    
+                    <div class="balance-checker">
+                        <div class="search-section">
+                            <div class="search-box enhanced">
+                                <div class="search-input-group">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="balance-account" placeholder="Enter Account Number">
+                                    <button onclick="checkBalance()" class="btn btn-primary">
+                                        <i class="fas fa-balance-scale"></i> Check Balance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="balance-result" class="balance-display" style="display: none;"></div>
+                        
+                        <!-- Quick Balance Actions -->
+                        <div id="balance-actions" class="balance-actions" style="display: none;">
+                            <h4>Quick Actions</h4>
+                            <div class="action-buttons">
+                                <button onclick="quickDeposit()" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Quick Deposit
+                                </button>
+                                <button onclick="quickWithdraw()" class="btn btn-warning">
+                                    <i class="fas fa-minus"></i> Quick Withdrawal
+                                </button>
+                                <button onclick="viewFullHistory()" class="btn btn-info">
+                                    <i class="fas fa-history"></i> Full History
+                                </button>
+                                <button onclick="printBalanceStatement()" class="btn btn-secondary">
+                                    <i class="fas fa-print"></i> Print Statement
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction History Tab -->
+                <div id="history-tab" class="tab-content">
+                    <div class="form-header">
+                        <h3><i class="fas fa-history"></i> Transaction History</h3>
+                        <p>View and filter transaction history for any account</p>
+                    </div>
+                    
+                    <div class="history-controls">
+                        <div class="search-filters">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label>Account Number</label>
+                                    <input type="text" id="history-account" placeholder="Enter Account Number (optional)">
+                                </div>
+                                <div class="filter-group">
+                                    <label>Transaction Type</label>
+                                    <select id="history-type">
+                                        <option value="">All Types</option>
+                                        <option value="Deposit">Deposits</option>
+                                        <option value="Withdrawal">Withdrawals</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Date From</label>
+                                    <input type="date" id="history-from">
+                                </div>
+                                <div class="filter-group">
+                                    <label>Date To</label>
+                                    <input type="date" id="history-to">
+                                </div>
+                            </div>
+                            <div class="filter-actions">
+                                <button onclick="filterTransactionHistory()" class="btn btn-primary">
+                                    <i class="fas fa-filter"></i> Apply Filters
+                                </button>
+                                <button onclick="clearHistoryFilters()" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Clear Filters
+                                </button>
+                                <button onclick="exportTransactionHistory()" class="btn btn-success">
+                                    <i class="fas fa-download"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="transaction-history-results" class="history-results">
+                        <div class="no-data">
+                            <i class="fas fa-search"></i>
+                            <p>Use the filters above to view transaction history</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success/Error Messages -->
+    <div id="message-container" class="message-container"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Confirm Transaction</h3>
+                <button onclick="closeModal()" class="btn-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="confirmTransaction()" class="btn btn-primary" id="confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="ai-service.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Transaction-specific JavaScript
+        let currentTransactionData = {};
+        let verifiedAccounts = {};
+
+        // Initialize transaction page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTransactionStats();
+            loadRecentTransactions();
+            
+            // Set today's date as default for history filters
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('history-to').value = today;
+            
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            document.getElementById('history-from').value = lastWeek.toISOString().split('T')[0];
+        });
+
+        // Tab Management
+        function showTransactionTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            // Update stats when switching to any tab
+            updateTransactionStats();
+        }
+
+        // Update transaction statistics
+        function updateTransactionStats() {
+            const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+            const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+            
+            let totalTransactions = transactions.length;
+            let totalDeposits = 0;
+            let totalWithdrawals = 0;
+            let totalBankBalance = 0;
+            
+            // Calculate today's totals
+            const today = new Date().toDateString();
+            transactions.forEach(transaction => {
+                const transactionDate = new Date(transaction.date).toDateString();
+                if (transactionDate === today) {
+                    if (transaction.type === 'Deposit') {
+                        totalDeposits += parseFloat(transaction.amount);
+                    } else if (transaction.type === 'Withdrawal') {
+                        totalWithdrawals += parseFloat(transaction.amount);
+                    }
+                }
+            });
+            
+            // Calculate total bank balance
+            accounts.forEach(account => {
+                totalBankBalance += parseFloat(account.balance || account.initialDeposit || 0);
+            });
+            
+            // Update display
+            document.getElementById('total-transactions').textContent = totalTransactions;
+            document.getElementById('total-deposits').textContent = '₹' + totalDeposits.toLocaleString();
+            document.getElementById('total-withdrawals').textContent = '₹' + totalWithdrawals.toLocaleString();
+            document.getElementById('total-bank-balance').textContent = '₹' + totalBankBalance.toLocaleString();
+        }
+
+        // Refresh stats function
+        function refreshTransactionStats() {
+            updateTransactionStats();
+            showMessage('Statistics refreshed successfully!', 'success');
+        }
+
+        // Page initialization continues in script.js with transaction functions
+    </script>
+</body>
+</html>

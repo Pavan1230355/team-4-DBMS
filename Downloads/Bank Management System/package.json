@@ -1,0 +1,12 @@
+{
+  "name": "bank-app-test",
+  "version": "1.0.0",
+  "description": "Headless tests for Bank Management System UI",
+  "main": "test-nav.js",
+  "scripts": {
+    "test-nav": "node test-nav.js"
+  },
+  "dependencies": {
+    "jsdom": "^22.1.0"
+  }
+}

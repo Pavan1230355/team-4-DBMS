@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="config.js"></script>
+    <script src="ai-service.js"></script>
+</head>
+<body>
+    <!-- Authentication redirect moved to script.js to ensure scripts are available before redirecting -->
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo"><i class="fas fa-university"></i> SecureBank</h1>
+            <div class="nav-menu">
+                <a href="#" class="nav-link" onclick="showPage('home')">Home</a>
+                <a href="accounts.html" class="nav-link">Accounts</a>
+                <a href="transactions.html" class="nav-link">Transactions</a>
+                <a href="#" class="nav-link" onclick="showPage('search')">Search</a>
+                <a href="#" class="nav-link" onclick="showPage('reports')">Reports</a>
+                <a href="#" class="nav-link" onclick="showPage('ai-assistant')">AI Assistant</a>
+                <div class="user-menu">
+                    <a href="#" class="nav-link user-link" onclick="toggleUserMenu(event)" id="user-menu-toggle">
+                        <i class="fas fa-user-circle"></i> <span id="current-user-name">User</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <a href="profile.html">
+                            <i class="fas fa-user-cog"></i> My Profile
+                        </a>
+                        <a href="#" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Home Page -->
+    <div id="home-page" class="page active">
+        <div class="container">
+            <div class="welcome-section">
+                <h1>Welcome to SecureBank Management System</h1>
+                <p>Your trusted partner for comprehensive banking solutions</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card" onclick="showPage('accounts')">
+                    <i class="fas fa-user-plus"></i>
+                    <h3>Account Management</h3>
+                    <p>Create, view, update, and manage customer accounts</p>
+                </div>
+                
+                <div class="feature-card" onclick="showPage('transactions')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h3>Transactions</h3>
+                    <p>Handle deposits, withdrawals, and balance inquiries</p>
+                </div>
+                
+                <div class="feature-card" onclick="showPage('search')">
+                    <i class="fas fa-search"></i>
+                    <h3>Account Search</h3>
+                    <p>Search accounts by number or customer name</p>
+                </div>
+                
+                <div class="feature-card" onclick="showPage('reports')">
+                    <i class="fas fa-chart-bar"></i>
+                    <h3>Reports</h3>
+                    <p>View comprehensive banking reports and analytics</p>
+                </div>
+
+                <div class="feature-card" onclick="showPage('ai-assistant')">
+                    <i class="fas fa-robot"></i>
+                    <h3>AI Assistant</h3>
+                    <p>Get help with banking services and loan applications</p>
+                </div>
+            </div>
+
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <h3 id="total-accounts">0</h3>
+                    <p>Total Accounts</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="total-balance">₹0</h3>
+                    <p>Total Bank Balance</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="total-transactions">0</h3>
+                    <p>Today's Transactions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Page -->
+    <div id="search-page" class="page">
+        <div class="container">
+            <h1>Account Search</h1>
+            
+            <div class="search-container">
+                <div class="search-methods">
+                    <div class="search-method">
+                        <h3>Search by Account Number</h3>
+                        <div class="search-box">
+                            <input type="text" id="search-by-number" placeholder="Enter Account Number">
+                            <button onclick="searchByNumber()" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                    
+                    <div class="search-method">
+                        <h3>Search by Customer Name</h3>
+                        <div class="search-box">
+                            <input type="text" id="search-by-name" placeholder="Enter Customer Name">
+                            <button onclick="searchByName()" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="search-results" class="search-results"></div>
+                <!-- Transfer Panel -->
+                <div id="transfer-panel" class="transfer-panel" style="margin-top:30px; display:none;">
+                    <h3>Transfer Funds Between Accounts</h3>
+                    <div class="transfer-rows" style="display:flex;gap:20px;flex-wrap:wrap;margin-top:15px;align-items:center;">
+                        <div class="transfer-slot" style="flex:1;min-width:220px;padding:15px;border-radius:12px;background:#fff;border:1px solid #e8e8ef;">
+                            <h4>FROM</h4>
+                            <div id="from-account" style="min-height:60px;color:#333;">(click an account result to select)</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+                            <button onclick="swapAccounts()" class="btn btn-info" title="Swap accounts">⇄ Swap</button>
+                        </div>
+                        <div class="transfer-slot" style="flex:1;min-width:220px;padding:15px;border-radius:12px;background:#fff;border:1px solid #e8e8ef;">
+                            <h4>TO</h4>
+                            <div id="to-account" style="min-height:60px;color:#333;">(click another account result to select)</div>
+                        </div>
+                    </div>
+
+                    <form id="transfer-form" onsubmit="confirmTransfer(event)" style="margin-top:20px;display:flex;gap:15px;flex-wrap:wrap;align-items:center;">
+                        <input type="number" id="transfer-amount" placeholder="Amount (₹)" min="1" step="0.01" style="padding:10px;border-radius:8px;border:2px solid #e1e5e9;flex:1;max-width:240px;" required>
+                        <input type="text" id="transfer-desc" placeholder="Description (optional)" style="padding:10px;border-radius:8px;border:2px solid #e1e5e9;flex:2;min-width:240px;">
+                        <button type="submit" class="btn btn-primary" style="min-width:180px;">Confirm Transfer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Page -->
+    <div id="reports-page" class="page">
+        <div class="container">
+            <h1>Banking Reports</h1>
+            
+            <div class="reports-container">
+                <div class="report-buttons">
+                    <button onclick="showAllAccounts()" class="btn btn-primary">All Accounts</button>
+                    <button onclick="showBankSummary()" class="btn btn-info">Bank Summary</button>
+                    <button onclick="showLowBalanceAccounts()" class="btn btn-warning">Low Balance Accounts</button>
+                </div>
+                
+                <div id="report-content" class="report-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Page -->
+    <div id="ai-assistant-page" class="page">
+        <div class="container">
+            <h1>AI Banking Assistant</h1>
+            
+            <!-- API Configuration Panel -->
+            <div class="config-panel" id="config-panel">
+                <div class="config-header">
+                    <h3><i class="fas fa-cog"></i> AI Configuration</h3>
+                    <button onclick="toggleConfigPanel()" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="config-content">
+                    <div class="form-group">
+                        <label>OpenAI API Key (Required for enhanced AI responses)</label>
+                        <div class="api-key-input">
+                            <input type="password" id="api-key-input" placeholder="Enter your OpenAI API key">
+                            <button onclick="saveApiKey()" class="btn btn-primary">Save</button>
+                            <button onclick="toggleApiKeyVisibility()" class="btn btn-secondary">
+                                <i class="fas fa-eye" id="api-key-toggle-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="config-status">
+                        <div id="ai-status" class="status-indicator">
+                            <i class="fas fa-circle"></i>
+                            <span>AI Status: Checking...</span>
+                        </div>
+                    </div>
+                    <div class="config-help">
+                        <p><strong>How to get an OpenAI API key:</strong></p>
+                        <ol>
+                            <li>Visit <a href="https://platform.openai.com" target="_blank">platform.openai.com</a></li>
+                            <li>Sign up or log in to your account</li>
+                            <li>Go to API Keys section</li>
+                            <li>Create a new API key</li>
+                            <li>Copy and paste it here</li>
+                        </ol>
+                        <p class="text-warning">⚠️ Keep your API key secure and never share it publicly!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-container">
+                <div class="ai-header">
+                    <div class="ai-controls">
+                        <button onclick="toggleConfigPanel()" class="btn btn-secondary">
+                            <i class="fas fa-cog"></i> Configure AI
+                        </button>
+                        <button onclick="clearChat()" class="btn btn-warning">
+                            <i class="fas fa-trash"></i> Clear Chat
+                        </button>
+                    </div>
+                </div>
+                <div class="ai-chat-box">
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="message bot-message">
+                            <i class="fas fa-robot"></i>
+                            <div class="message-content">
+                                <p>Hello! I'm your AI Banking Assistant. I can help you with:</p>
+                                <ul>
+                                    <li>Creating bank accounts</li>
+                                    <li>Understanding banking services</li>
+                                    <li>Loan application guidance</li>
+                                    <li>General banking questions</li>
+                                </ul>
+                                <p>How can I assist you today?</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input">
+                        <input type="text" id="user-message" placeholder="Type your question here..." onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button onclick="sendMessage()" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="quick-help">
+                    <h3>Quick Help Topics</h3>
+                    <div class="help-buttons">
+                        <button onclick="askAI('How to create a bank account?')" class="help-btn">Account Creation</button>
+                        <button onclick="askAI('What documents are needed for loan application?')" class="help-btn">Loan Documents</button>
+                        <button onclick="askAI('What are the different types of accounts?')" class="help-btn">Account Types</button>
+                        <button onclick="askAI('How to apply for a personal loan?')" class="help-btn">Personal Loan</button>
+                        <button onclick="askAI('What are the interest rates?')" class="help-btn">Interest Rates</button>
+                        <button onclick="askAI('How to maintain minimum balance?')" class="help-btn">Minimum Balance</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="message-container" class="message-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
