@@ -10,7 +10,13 @@
     <script src="ai-service.js"></script>
 </head>
 <body>
-    <!-- Authentication redirect moved to script.js to ensure scripts are available before redirecting -->
+    <script>
+        // Check if user is logged in before loading the page
+        const currentUser = localStorage.getItem('current_user');
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        }
+    </script>
     
     <!-- Navigation -->
     <nav class="navbar">
@@ -123,29 +129,6 @@
                 </div>
                 
                 <div id="search-results" class="search-results"></div>
-                <!-- Transfer Panel -->
-                <div id="transfer-panel" class="transfer-panel" style="margin-top:30px; display:none;">
-                    <h3>Transfer Funds Between Accounts</h3>
-                    <div class="transfer-rows" style="display:flex;gap:20px;flex-wrap:wrap;margin-top:15px;align-items:center;">
-                        <div class="transfer-slot" style="flex:1;min-width:220px;padding:15px;border-radius:12px;background:#fff;border:1px solid #e8e8ef;">
-                            <h4>FROM</h4>
-                            <div id="from-account" style="min-height:60px;color:#333;">(click an account result to select)</div>
-                        </div>
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-                            <button onclick="swapAccounts()" class="btn btn-info" title="Swap accounts">⇄ Swap</button>
-                        </div>
-                        <div class="transfer-slot" style="flex:1;min-width:220px;padding:15px;border-radius:12px;background:#fff;border:1px solid #e8e8ef;">
-                            <h4>TO</h4>
-                            <div id="to-account" style="min-height:60px;color:#333;">(click another account result to select)</div>
-                        </div>
-                    </div>
-
-                    <form id="transfer-form" onsubmit="confirmTransfer(event)" style="margin-top:20px;display:flex;gap:15px;flex-wrap:wrap;align-items:center;">
-                        <input type="number" id="transfer-amount" placeholder="Amount (₹)" min="1" step="0.01" style="padding:10px;border-radius:8px;border:2px solid #e1e5e9;flex:1;max-width:240px;" required>
-                        <input type="text" id="transfer-desc" placeholder="Description (optional)" style="padding:10px;border-radius:8px;border:2px solid #e1e5e9;flex:2;min-width:240px;">
-                        <button type="submit" class="btn btn-primary" style="min-width:180px;">Confirm Transfer</button>
-                    </form>
-                </div>
             </div>
         </div>
     </div>

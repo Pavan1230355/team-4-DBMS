@@ -1090,133 +1090,6 @@ function displaySearchResults(searchResults) {
     document.getElementById('search-results').innerHTML = resultsHTML;
 }
 
-// Transfer selection helpers
-let selectedFromAccount = null;
-let selectedToAccount = null;
-
-function attachAccountClickHandlers() {
-    document.querySelectorAll('.account-card').forEach(card => {
-        card.addEventListener('click', function() {
-            const accNum = this.getAttribute('data-account');
-            if (!accNum) return;
-            // If from is not selected, set as from; else if from selected and different, set as to
-            if (!selectedFromAccount || (selectedFromAccount && selectedToAccount && selectedFromAccount.accountNumber === accNum)) {
-                // select as from
-                selectedFromAccount = accounts.find(a => a.accountNumber === accNum);
-                selectedToAccount = null;
-            } else if (!selectedToAccount && selectedFromAccount && selectedFromAccount.accountNumber !== accNum) {
-                selectedToAccount = accounts.find(a => a.accountNumber === accNum);
-            } else if (selectedFromAccount && selectedFromAccount.accountNumber === accNum) {
-                // toggle off
-                selectedFromAccount = null;
-            }
-            renderTransferSelection();
-        });
-    });
-}
-
-function renderTransferSelection() {
-    const panel = document.getElementById('transfer-panel');
-    if (!panel) return;
-    // show panel if at least one account exists
-    panel.style.display = accounts.length ? 'block' : 'none';
-
-    const fromEl = document.getElementById('from-account');
-    const toEl = document.getElementById('to-account');
-
-    fromEl.textContent = selectedFromAccount ? `${selectedFromAccount.name} — A/C ${selectedFromAccount.accountNumber} — ₹${selectedFromAccount.balance.toLocaleString('en-IN')}` : '(click an account result to select)';
-    toEl.textContent = selectedToAccount ? `${selectedToAccount.name} — A/C ${selectedToAccount.accountNumber} — ₹${selectedToAccount.balance.toLocaleString('en-IN')}` : '(click another account result to select)';
-}
-
-function swapAccounts() {
-    const temp = selectedFromAccount;
-    selectedFromAccount = selectedToAccount;
-    selectedToAccount = temp;
-    renderTransferSelection();
-}
-
-function confirmTransfer(event) {
-    event.preventDefault();
-    const amount = parseFloat(document.getElementById('transfer-amount').value);
-    const desc = document.getElementById('transfer-desc').value.trim() || 'Transfer';
-
-    if (!selectedFromAccount || !selectedToAccount) {
-        showMessage('Please select both From and To accounts', 'error');
-        return;
-    }
-
-    if (selectedFromAccount.accountNumber === selectedToAccount.accountNumber) {
-        showMessage('Source and destination accounts must be different', 'error');
-        return;
-    }
-
-    if (isNaN(amount) || amount <= 0) {
-        showMessage('Please enter a valid transfer amount', 'error');
-        return;
-    }
-
-    // Find live account objects in accounts array (by reference may differ)
-    const srcIdx = accounts.findIndex(a => a.accountNumber === selectedFromAccount.accountNumber);
-    const dstIdx = accounts.findIndex(a => a.accountNumber === selectedToAccount.accountNumber);
-
-    if (srcIdx === -1 || dstIdx === -1) {
-        showMessage('Selected accounts not found', 'error');
-        return;
-    }
-
-    if (accounts[srcIdx].balance < amount) {
-        showMessage('Insufficient balance in source account', 'error');
-        return;
-    }
-
-    // Perform transfer: withdraw then deposit
-    accounts[srcIdx].balance -= amount;
-    accounts[dstIdx].balance += amount;
-
-    const now = new Date();
-    transactions.push({
-        id: Date.now() + Math.random(),
-        accountNumber: accounts[srcIdx].accountNumber,
-        name: accounts[srcIdx].name,
-        type: 'Transfer - Debit',
-        amount: amount,
-        description: `${desc} -> ${accounts[dstIdx].accountNumber}`,
-        date: now,
-        balanceAfter: accounts[srcIdx].balance
-    });
-
-    transactions.push({
-        id: Date.now() + Math.random(),
-        accountNumber: accounts[dstIdx].accountNumber,
-        name: accounts[dstIdx].name,
-        type: 'Transfer - Credit',
-        amount: amount,
-        description: `${desc} <- ${accounts[srcIdx].accountNumber}`,
-        date: now,
-        balanceAfter: accounts[dstIdx].balance
-    });
-
-    showMessage(`₹${amount.toLocaleString('en-IN')} transferred successfully`, 'success');
-    // Reset selection and form
-    selectedFromAccount = null;
-    selectedToAccount = null;
-    document.getElementById('transfer-form').reset();
-    renderTransferSelection();
-    updateDashboardStats();
-    refreshAccountList();
-}
-
-// After rendering search results, attach handlers
-const originalDisplaySearchResults = displaySearchResults;
-displaySearchResults = function(results) {
-    originalDisplaySearchResults(results);
-    // slight delay to ensure DOM inserted
-    setTimeout(() => {
-        attachAccountClickHandlers();
-        renderTransferSelection();
-    }, 50);
-};
-
 // Reports Functions
 function showAllAccounts() {
     if (accounts.length === 0) {
@@ -1748,7 +1621,8 @@ function getAIResponse(userMessage) {
         
         Would you like help with setting up balance alerts?`;
     }
-    
+}
+
 function getStaticResponse(userMessage) {
     const message = userMessage.toLowerCase();
     
@@ -3053,8 +2927,3 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthentication();
 });
-
-// End of script.js - ensure file ends with balanced braces
-
-}
-

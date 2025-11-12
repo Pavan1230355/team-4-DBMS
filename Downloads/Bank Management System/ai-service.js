@@ -334,12 +334,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     if (!initialized) {
         console.warn('AI Service running in fallback mode');
-        // showMessage is defined in script.js; guard in case scripts load in a different order
-        if (typeof showMessage === 'function') {
-            showMessage('AI Assistant running in offline mode', 'warning');
-        } else {
-            console.warn('showMessage function not available yet; skipping UI warning');
-        }
+        showMessage('AI Assistant running in offline mode', 'warning');
     }
 });
 
